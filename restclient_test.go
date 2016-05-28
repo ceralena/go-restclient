@@ -92,7 +92,7 @@ func TestHttpClientRequests(t *testing.T) {
 
 			switch i {
 			case 0:
-				status, err = client.Do(c.endpoint, c.expect_method, c.expect_request, &res)
+				status, err = client.Do(c.expect_method, c.endpoint, c.expect_request, &res)
 			default:
 				b, err := json.Marshal(c.expect_request)
 				if err != nil {
@@ -101,7 +101,7 @@ func TestHttpClientRequests(t *testing.T) {
 					continue
 				}
 				buf := bytes.NewBuffer(b)
-				status, rdr, err = client.DoStream(c.endpoint, c.expect_method, buf)
+				status, rdr, err = client.DoStream(c.expect_method, c.endpoint, buf)
 			}
 
 			if rdr != nil {
@@ -246,7 +246,7 @@ func TestCustomErrorConstructor(t *testing.T) {
 
 		var res testResponse
 
-		status, err := client.Do(c.endpoint, c.expect_method, nil, &res)
+		status, err := client.Do(c.expect_method, c.endpoint, nil, &res)
 
 		if err == nil && c.expect_error != "" {
 			fmt.Println("hi sir")

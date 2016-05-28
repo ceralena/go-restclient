@@ -91,7 +91,7 @@ func (client *httpClient) fullPath(path string) string {
 	return proto + "://" + client.host + port + path
 }
 
-func (client *httpClient) requestRaw(path string, method string, payload io.Reader) (int, io.ReadCloser, error) {
+func (client *httpClient) requestRaw(method string, path string, payload io.Reader) (int, io.ReadCloser, error) {
 	full_path := client.fullPath(path)
 
 	var req *http.Request
@@ -114,7 +114,7 @@ func (client *httpClient) requestRaw(path string, method string, payload io.Read
 	return resp.StatusCode, resp.Body, err
 }
 
-func (client *httpClient) request(path string, method string, payload interface{}) (int, io.ReadCloser, error) {
+func (client *httpClient) request(method string, path string, payload interface{}) (int, io.ReadCloser, error) {
 	rdr, ok := payload.(io.Reader)
 	if !ok {
 		// Payload is not a reader - assume it's JSON and try to encode it
@@ -124,11 +124,11 @@ func (client *httpClient) request(path string, method string, payload interface{
 		}
 		rdr = bytes.NewBuffer(enc)
 	}
-	return client.requestRaw(path, method, rdr)
+	return client.requestRaw(method, path, rdr)
 }
 
-func (client *httpClient) requestJSON(path string, method string, payload interface{}, into interface{}) (int, error) {
-	status, body, err := client.request(path, method, payload)
+func (client *httpClient) requestJSON(method, path string, payload interface{}, into interface{}) (int, error) {
+	status, body, err := client.request(method, path, payload)
 
 	if err != nil {
 		return status, err
@@ -139,12 +139,12 @@ func (client *httpClient) requestJSON(path string, method string, payload interf
 	return status, dec.Decode(into)
 }
 
-func (client *httpClient) Do(path, method string, payload interface{}, into interface{}) (int, error) {
-	return client.requestJSON(path, method, payload, into)
+func (client *httpClient) Do(method, path string, payload interface{}, into interface{}) (int, error) {
+	return client.requestJSON(method, path, payload, into)
 }
 
-func (client *httpClient) DoStream(path, method string, payload interface{}) (int, io.ReadCloser, error) {
-	return client.request(path, method, payload)
+func (client *httpClient) DoStream(method, path string, payload interface{}) (int, io.ReadCloser, error) {
+	return client.request(method, path, payload)
 }
 
 func (client *httpClient) SetErrorConstructor(status_codes []int, fn func(*http.Request, *http.Response) error) {

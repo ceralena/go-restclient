@@ -1,4 +1,4 @@
-// Package httpclient provides a simple client for talking to RESTful HTTP
+// Package restclient provides a simple client for talking to RESTful HTTP
 // APIs that mostly return JSON responses.
 //
 //
@@ -16,11 +16,12 @@ import (
 )
 
 const (
-	http_port_default  = 80
-	https_port_default = 443
+	httpPortDefault  = 80
+	httpsPortDefault = 443
 )
 
-// A HTTPClient provides access to a HTTP service scoped to a particlar domain and root URL.
+// Client provides access to a HTTP service scoped to a particlar domain and
+// root URL.
 type Client interface {
 	// Send a request with this method to this path.
 	//
@@ -54,16 +55,16 @@ type Client interface {
 	SetErrorConstructor([]int, func(*http.Request, *http.Response) error)
 }
 
-// Create a new HTTP client.
-func New(host string, port int, use_https bool) Client {
-	return &httpClient{host, port, use_https, nil, nil}
+// New creates a new HTTP client.
+func New(host string, port int, useHTTPS bool) Client {
+	return &httpClient{host, port, useHTTPS, nil, nil}
 }
 
 // HTTPClient implementation.
 type httpClient struct {
-	host      string
-	port      int
-	use_https bool
+	host     string
+	port     int
+	useHTTPS bool
 
 	customErrorStatusCodes []int
 	customErrorConstructor func(*http.Request, *http.Response) error
@@ -71,17 +72,17 @@ type httpClient struct {
 
 func (client *httpClient) fullPath(path string) string {
 	var proto, port string
-	var default_port int
+	var defaultPort int
 
-	if client.use_https {
+	if client.useHTTPS {
 		proto = "https"
-		default_port = https_port_default
+		defaultPort = httpsPortDefault
 	} else {
 		proto = "http"
-		default_port = http_port_default
+		defaultPort = httpPortDefault
 	}
 
-	if client.port != default_port {
+	if client.port != defaultPort {
 		port = ":" + strconv.Itoa(client.port)
 	}
 
@@ -92,12 +93,12 @@ func (client *httpClient) fullPath(path string) string {
 }
 
 func (client *httpClient) requestRaw(method string, path string, payload io.Reader) (int, io.ReadCloser, error) {
-	full_path := client.fullPath(path)
+	fullPath := client.fullPath(path)
 
 	var req *http.Request
 	var err error
 
-	req, err = http.NewRequest(method, full_path, payload)
+	req, err = http.NewRequest(method, fullPath, payload)
 
 	if err != nil {
 		return -1, nil, err
@@ -147,14 +148,14 @@ func (client *httpClient) DoStream(method, path string, payload interface{}) (in
 	return client.request(method, path, payload)
 }
 
-func (client *httpClient) SetErrorConstructor(status_codes []int, fn func(*http.Request, *http.Response) error) {
-	client.customErrorStatusCodes = status_codes
+func (client *httpClient) SetErrorConstructor(statusCodes []int, fn func(*http.Request, *http.Response) error) {
+	client.customErrorStatusCodes = statusCodes
 	client.customErrorConstructor = fn
 }
 
-func (client *httpClient) hasCustomError(status_code int) bool {
+func (client *httpClient) hasCustomError(statusCode int) bool {
 	for _, c := range client.customErrorStatusCodes {
-		if c == status_code {
+		if c == statusCode {
 			return true
 		}
 	}

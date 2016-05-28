@@ -39,11 +39,11 @@ func TestHttpClientPath(t *testing.T) {
 
 func TestHttpClientRequests(t *testing.T) {
 	type testcase struct {
-		endpoint        string
-		expect_status   int
-		expect_request  *testRequest
-		expect_response testResponse
-		expect_method   string
+		endpoint       string
+		expectStatus   int
+		expectRequest  *testRequest
+		expectResponse testResponse
+		expectMethod   string
 	}
 
 	cases := []testcase{
@@ -71,7 +71,7 @@ func TestHttpClientRequests(t *testing.T) {
 	// First loop over the cases once creating all the handlers
 	handlers := make(map[string]http.HandlerFunc)
 	for _, c := range cases {
-		handlers[c.endpoint] = makeTestHandler(t, c.endpoint, c.expect_method, c.expect_request, c.expect_status, c.expect_response)
+		handlers[c.endpoint] = makeTestHandler(t, c.endpoint, c.expectMethod, c.expectRequest, c.expectStatus, c.expectResponse)
 	}
 	server, err := startTestServer(handlers)
 	if err != nil {
@@ -92,16 +92,16 @@ func TestHttpClientRequests(t *testing.T) {
 
 			switch i {
 			case 0:
-				status, err = client.Do(c.expect_method, c.endpoint, c.expect_request, &res)
+				status, err = client.Do(c.expectMethod, c.endpoint, c.expectRequest, &res)
 			default:
-				b, err := json.Marshal(c.expect_request)
+				b, err := json.Marshal(c.expectRequest)
 				if err != nil {
 					t.Errorf("Failed to marshal request: %s", err)
 					t.Fail()
 					continue
 				}
 				buf := bytes.NewBuffer(b)
-				status, rdr, err = client.DoStream(c.expect_method, c.endpoint, buf)
+				status, rdr, err = client.DoStream(c.expectMethod, c.endpoint, buf)
 			}
 
 			if rdr != nil {
@@ -117,11 +117,11 @@ func TestHttpClientRequests(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error in request: %s", err)
 				t.Fail()
-			} else if status != c.expect_status {
-				t.Errorf("Did not get status %d for %s %s", c.expect_status, c.expect_method, c.endpoint)
+			} else if status != c.expectStatus {
+				t.Errorf("Did not get status %d for %s %s", c.expectStatus, c.expectMethod, c.endpoint)
 				t.Fail()
-			} else if res.Response != c.expect_response.Response {
-				t.Errorf("Did not get expected response: wanted %#v, got %#v", c.expect_response, res)
+			} else if res.Response != c.expectResponse.Response {
+				t.Errorf("Did not get expected response: wanted %#v, got %#v", c.expectResponse, res)
 			}
 		}
 	}
@@ -173,13 +173,13 @@ func startTestServer(handlers map[string]http.HandlerFunc) (*testServer, error) 
 	return &testServer{listener, port}, nil
 }
 
-func makeTestHandler(t *testing.T, endpoint, expect_method string, expect_request *testRequest, expect_status int, expect_response testResponse) func(w http.ResponseWriter, r *http.Request) {
+func makeTestHandler(t *testing.T, endpoint, expectMethod string, expectRequest *testRequest, expectStatus int, expectResponse testResponse) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != expect_method {
-			t.Errorf("Got method %s for %s, expected %s", r.Method, endpoint, expect_method)
+		if r.Method != expectMethod {
+			t.Errorf("Got method %s for %s, expected %s", r.Method, endpoint, expectMethod)
 			t.Fail()
 		}
-		if expect_request != nil {
+		if expectRequest != nil {
 			var req testRequest
 			dec := json.NewDecoder(r.Body)
 			err := dec.Decode(&req)
@@ -193,11 +193,11 @@ func makeTestHandler(t *testing.T, endpoint, expect_method string, expect_reques
 			}
 		}
 
-		w.WriteHeader(expect_status)
+		w.WriteHeader(expectStatus)
 
 		// Send the expected error response
 		enc := json.NewEncoder(w)
-		err := enc.Encode(expect_response)
+		err := enc.Encode(expectResponse)
 		if err != nil {
 			t.Errorf("Failed to marshal JSON response: %s", err)
 			t.FailNow()
@@ -207,13 +207,13 @@ func makeTestHandler(t *testing.T, endpoint, expect_method string, expect_reques
 
 func TestCustomErrorConstructor(t *testing.T) {
 	type constructorTestCase struct {
-		endpoint            string
-		expect_response     testResponse
-		custom_err_statuses []int
-		custom_err_handler  func(*http.Request, *http.Response) error
-		expect_status       int
-		expect_method       string
-		expect_error        string
+		endpoint          string
+		expectResponse    testResponse
+		customErrStatuses []int
+		customErrHandler  func(*http.Request, *http.Response) error
+		expectStatus      int
+		expectMethod      string
+		expectError       string
 	}
 	cases := []constructorTestCase{
 		{"/some_cons_bad", testResponse{"hi my friends"}, []int{400}, func(_ *http.Request, resp *http.Response) error {
@@ -223,14 +223,14 @@ func TestCustomErrorConstructor(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return fmt.Errorf("response '%s' is not valid mate.", res.Response)
-		}, 400, "POST", "response 'hi my friends' is not valid mate."},
+			return fmt.Errorf("response '%s' is not valid mate", res.Response)
+		}, 400, "POST", "response 'hi my friends' is not valid mate"},
 	}
 
 	// First loop over the cases once creating all the handlers
 	handlers := make(map[string]http.HandlerFunc)
 	for _, c := range cases {
-		handlers[c.endpoint] = makeTestHandler(t, c.endpoint, c.expect_method, nil, c.expect_status, c.expect_response)
+		handlers[c.endpoint] = makeTestHandler(t, c.endpoint, c.expectMethod, nil, c.expectStatus, c.expectResponse)
 	}
 	server, err := startTestServer(handlers)
 	if err != nil {
@@ -242,23 +242,23 @@ func TestCustomErrorConstructor(t *testing.T) {
 	// Now we can create our client and start making requests
 	client := New("localhost", server.port, false)
 	for _, c := range cases {
-		client.SetErrorConstructor(c.custom_err_statuses, c.custom_err_handler)
+		client.SetErrorConstructor(c.customErrStatuses, c.customErrHandler)
 
 		var res testResponse
 
-		status, err := client.Do(c.expect_method, c.endpoint, nil, &res)
+		status, err := client.Do(c.expectMethod, c.endpoint, nil, &res)
 
-		if err == nil && c.expect_error != "" {
+		if err == nil && c.expectError != "" {
 			fmt.Println("hi sir")
 			t.Fail()
-		} else if err != nil && c.expect_error != err.Error() {
+		} else if err != nil && c.expectError != err.Error() {
 			fmt.Println("hi sir")
 			t.Fail()
-		} else if err != nil && c.expect_error == "" {
+		} else if err != nil && c.expectError == "" {
 			t.Errorf("Error in request: %s", err)
 			t.Fail()
-		} else if status != c.expect_status {
-			t.Errorf("Did not get status %d for %s %s", c.expect_status, c.expect_method, c.endpoint)
+		} else if status != c.expectStatus {
+			t.Errorf("Did not get status %d for %s %s", c.expectStatus, c.expectMethod, c.endpoint)
 			t.Fail()
 		}
 	}

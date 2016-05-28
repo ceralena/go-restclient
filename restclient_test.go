@@ -121,9 +121,9 @@ func TestHttpClientRequests(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			} else if status != c.expectStatus {
-				t.Fatal("Did not get status %d for %s %s", c.expectStatus, c.expectMethod, c.endpoint)
+				t.Fatalf("Did not get status %d for %s %s", c.expectStatus, c.expectMethod, c.endpoint)
 			} else if res.Response != c.expectResponse.Response {
-				t.Fatal("Did not get expected response: wanted %#v, got %#v", c.expectResponse, res)
+				t.Fatalf("Did not get expected response: wanted %#v, got %#v", c.expectResponse, res)
 			}
 		}
 	}

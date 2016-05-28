@@ -104,6 +104,10 @@ func TestHttpClientRequests(t *testing.T) {
 				status, rdr, err = client.DoStream(c.expectMethod, c.endpoint, buf)
 			}
 
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			if rdr != nil {
 				dec := json.NewDecoder(rdr)
 				err := dec.Decode(&res)
@@ -115,13 +119,11 @@ func TestHttpClientRequests(t *testing.T) {
 			}
 
 			if err != nil {
-				t.Errorf("Error in request: %s", err)
-				t.Fail()
+				t.Fatal(err)
 			} else if status != c.expectStatus {
-				t.Errorf("Did not get status %d for %s %s", c.expectStatus, c.expectMethod, c.endpoint)
-				t.Fail()
+				t.Fatal("Did not get status %d for %s %s", c.expectStatus, c.expectMethod, c.endpoint)
 			} else if res.Response != c.expectResponse.Response {
-				t.Errorf("Did not get expected response: wanted %#v, got %#v", c.expectResponse, res)
+				t.Fatal("Did not get expected response: wanted %#v, got %#v", c.expectResponse, res)
 			}
 		}
 	}

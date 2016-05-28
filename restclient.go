@@ -163,5 +163,6 @@ func (client *httpClient) hasCustomError(statusCode int) bool {
 }
 
 func (client *httpClient) customErrorResponse(req *http.Request, resp *http.Response) error {
+	defer resp.Body.Close()
 	return client.customErrorConstructor(req, resp)
 }

@@ -136,8 +136,16 @@ func (client *httpClient) requestJSON(method, path string, payload interface{}, 
 	}
 
 	defer body.Close()
+
+	return status, handleJSONResponse(body, into)
+}
+
+func handleJSONResponse(body io.Reader, into interface{}) error {
+	if into == nil {
+		return nil
+	}
 	dec := json.NewDecoder(body)
-	return status, dec.Decode(into)
+	return dec.Decode(into)
 }
 
 func (client *httpClient) Do(method, path string, payload interface{}, into interface{}) (int, error) {

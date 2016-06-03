@@ -266,6 +266,11 @@ func TestCustomErrorConstructor(t *testing.T) {
 	}
 }
 
-func TestStreamRequest(t *testing.T) {
-
+func TestHandleNoResponse(t *testing.T) {
+	res := []byte{}
+	body := bytes.NewBuffer(res)
+	err := handleJSONResponse(body, nil)
+	if err != nil {
+		t.Errorf("Got error when handling nil response: %v", err)
+	}
 }
